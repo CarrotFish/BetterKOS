@@ -2,3 +2,5 @@ config.json
 ._*
 .DS_Store
 BetterApp
+model_100.onnx
+*.tmp

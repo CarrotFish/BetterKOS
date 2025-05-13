@@ -16,12 +16,15 @@ BetterKOS开发框架是一个基于K-Scale机器人项目，对机器人编程�
 
 ## 配置config
 
+将model_100.onnx放入根目录
+
 在项目根目录新建 `config.json` 文件，并填写以下内容：
 
 ```json
 {
     "robot_ip": "192.168.42.1",
-    "robot_port": 50051
+    "robot_port": 50051,
+    "model_file": "model_100.onnx"
 }
 ```
 其中 `robot_ip` 为机器人IP地址，`robot_port` 为机器人端口号。

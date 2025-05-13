@@ -1,3 +1,5 @@
+import sys
+sys.path.append('.')
 
 from BetterKOS.core import BetterKOS
 from BetterKOS.app import run

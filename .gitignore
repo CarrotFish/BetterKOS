@@ -4,3 +4,4 @@ config.json
 BetterApp
 model_100.onnx
 *.tmp
+__pycache__

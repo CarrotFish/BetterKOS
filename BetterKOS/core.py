@@ -93,7 +93,7 @@ class BetterKOS(KOS):
             }])
         await self.command_actuators(cmds)
     async def init(self):
-        # 初始化电机
+        """初始化电机"""
         print('正在配置电机...')
         for actuator_id in ACTUATOR_MAPPING.values():
             await self.actuator.configure_actuator(
@@ -108,6 +108,9 @@ class BetterKOS(KOS):
             print(state)
             self.source_positions[state.actuator_id] = state.position
         print('电机位置初始化完成')
+    async def init_imu(self):
+        """初始化IMU"""
+        await self.imu.zero()
     async def move(self, actuator_id, position, speed=10):
         return await self.actuator.command_actuators([{
             'actuator_id': actuator_id,

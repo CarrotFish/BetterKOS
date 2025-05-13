@@ -10,7 +10,9 @@ async def main(App: Type[BetterKOS]):
     async with App(config['robot_ip'], config['robot_port']) as kos:
         try:
             await kos.load_session(config['model_file'])
-            input('press to continue')
+            input('回车以初始化imu')
+            await kos.init_imu()
+            input('回车以开始循环')
             await kos.loop()
         except:
             pass

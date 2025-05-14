@@ -126,7 +126,8 @@ class BetterKOS(KOS):
             k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
             now_pos = transform_position(state.position-self.source_positions[state.actuator_id])*k
             command = commands[ids.index(state.actuator_id)]
-            direction = 1 if command['position'] > now_pos else -1
+            # direction = 1 if command['position'] > now_pos else -1
+            direction = 1
             cmds.append({
                 'actuator_id': state.actuator_id,
                 'position': transform_position(command['position']*k + self.source_positions[command['actuator_id']]),
@@ -134,6 +135,15 @@ class BetterKOS(KOS):
                 'torque': command.get('torque', CONFIG['actuator_torque'])
             })
         return await self.actuator.command_actuators(cmds)
+    async def get_actuators_state(self, actuator_ids:list[int]):
+        raw = await self.actuator.get_actuators_state(actuator_ids)
+        result_states = []
+        for state in raw.states:
+            k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
+            state.position = k*transform_position(state.position-self.source_positions[state.actuator_id])
+            result_states.append(state)
+        # return result_states
+        return raw
     async def __aenter__(self):
         await super().__aenter__()
         await self.init()
@@ -170,7 +180,7 @@ class BetterKOS(KOS):
         base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]
         base_euler = [-imu_euler_angles.yaw/180*math.pi, -imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi]
         # 获取关节位置和速度
-        states = await self.actuator.get_actuators_state([
+        states = await self.get_actuators_state([
             ACTUATOR_MAPPING['right_hip_pitch'],
             ACTUATOR_MAPPING['left_hip_pitch'],
             ACTUATOR_MAPPING['right_hip_yaw'],
@@ -184,10 +194,13 @@ class BetterKOS(KOS):
         ])
         dof_pos = np.zeros(10)
         dof_vel = np.zeros(10)
+        # for state in states.states:
+        #     k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
+        #     dof_pos[MODEL_MAP.index(state.actuator_id)] = k*transform_position(state.position - self.source_positions[state.actuator_id])/180*math.pi
+        #     dof_vel[MODEL_MAP.index(state.actuator_id)] = k*state.velocity/180*math.pi
         for state in states.states:
-            k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-            dof_pos[MODEL_MAP.index(state.actuator_id)] = k*transform_position(state.position - self.source_positions[state.actuator_id])/180*math.pi
-            dof_vel[MODEL_MAP.index(state.actuator_id)] = k*state.velocity/180*math.pi
+            dof_pos[MODEL_MAP.index(state.actuator_id)] = state.position/180*math.pi
+            dof_vel[MODEL_MAP.index(state.actuator_id)] = state.velocity/180*math.pi
         # 推理
         next_actions = onnx_inference(self.session, self.phase, self.move_commands, {
             'ang_vel': 1.0,
@@ -216,7 +229,7 @@ class BetterKOS(KOS):
             await self._update()
             await self.update_after()
             self.frame += 1
-            await asyncio.sleep(delta_time - max(0, time.time()-st))
+            await asyncio.sleep(max(0, delta_time - (time.time()-st)))
     
 
 

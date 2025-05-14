@@ -110,7 +110,9 @@ class BetterKOS(KOS):
         print('电机位置初始化完成')
     async def init_imu(self):
         """初始化IMU"""
-        await self.imu.zero()
+        # await self.imu.zero()
+        self.source_imu_values = await self.imu.get_imu_values()
+        self.source_imu_angles = await self.imu.get_euler_angles()
     async def move(self, actuator_id, position, speed=10):
         return await self.actuator.command_actuators([{
             'actuator_id': actuator_id,
@@ -144,6 +146,18 @@ class BetterKOS(KOS):
             result_states.append(state)
         # return result_states
         return raw
+    async def get_euler_angles(self):
+        raw = await self.imu.get_euler_angles()
+        raw.roll = transform_position(raw.roll - self.source_imu_angles.roll)
+        raw.pitch = transform_position(raw.pitch - self.source_imu_angles.pitch)
+        raw.yaw = transform_position(raw.yaw - self.source_imu_angles.yaw)
+        return raw
+    async def get_imu_values(self):
+        raw = await self.imu.get_imu_values()
+        # raw.gyro_x = transform_position(raw.gyro_x - self.source_imu_values.gyro_x)
+        # raw.gyro_y = transform_position(raw.gyro_y - self.source_imu_values.gyro_y)
+        # raw.gyro_z = transform_position(raw.gyro_z - self.source_imu_values.gyro_z)
+        return raw
     async def __aenter__(self):
         await super().__aenter__()
         await self.init()
@@ -172,9 +186,11 @@ class BetterKOS(KOS):
                 self.phase -= 2*math.pi
         self.last_time_second = current_time_second
         # 获取传感器数据
-        imu_euler_angles = await self.imu.get_euler_angles()
-        imu_data = await self.imu.get_imu_values()
-        imu_advanced_data = await self.imu.get_imu_advanced_values()
+        # imu_euler_angles = await self.imu.get_euler_angles()
+        # imu_data = await self.imu.get_imu_values()
+        # imu_advanced_data = await self.imu.get_imu_advanced_values()
+        imu_euler_angles = await self.get_euler_angles()
+        imu_data = await self.get_imu_values()
         # base_ang_vel = [imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi, imu_data.gyro_z/180*math.pi]
         # base_euler = [imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi, imu_euler_angles.yaw/180*math.pi]
         base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]

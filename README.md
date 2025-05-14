@@ -14,9 +14,15 @@ BetterKOS开发框架是一个基于K-Scale机器人项目，对机器人编程�
 
 在根目录下新建文件夹 `BetterApp` ，新建文件 `main.py` 参照examples/test.py编写自己的程序。
 
+主程序逻辑如下：
+- 导入需要的库
+- 建立自定义 `App` 类，继承 `BetterKOS` 类
+- 在异步函数 `update` 和 `update_after` 中编写每帧需要的逻辑处理
+- 调用 `BetterKOS.app.run` 函数，传入 `App` 类（不用实例化）运行程序
+
 ## 配置config
 
-将model_100.onnx放入根目录
+将 `model_100.onnx` 放入根目录
 
 在项目根目录新建 `config.json` 文件，并填写以下内容：
 

@@ -33,9 +33,26 @@ ACTUATOR_MAPPING = {
     "right_ankle_pitch": 45,
 }
 ACTUATOR_WITH_WRONG_DIRECTION = [
-    # 34, 41, 42, 43, 45
-    31, 32, 33, 35, 44
+    
 ]
+ACTUATOR_POSITION_RANGE = {
+    11: [-10, 10],
+    12: [-10, 10],
+    13: [-10, 10],
+    21: [-10, 10],
+    22: [-10, 10],
+    23: [-10, 10],
+    31: [-60, 10],
+    32: [-45, 45],
+    33: [-45, 45],
+    34: [-10, 90],
+    35: [-90, 90],
+    41: [-10, 60],
+    42: [-45, 45],
+    43: [-45, 45],
+    44: [-90, 10],
+    45: [-90, 90]
+}
 MODEL_MAP = (
                 ACTUATOR_MAPPING['right_hip_pitch'],
                 ACTUATOR_MAPPING['left_hip_pitch'],
@@ -49,7 +66,7 @@ MODEL_MAP = (
                 ACTUATOR_MAPPING['left_ankle_pitch']
             )
 CONFIG = {
-    'actuator_speed': 20,
+    'actuator_speed': 50,
     'actuator_torque': 0.1
 }
 
@@ -120,21 +137,32 @@ class BetterKOS(KOS):
             'velocity': speed
         }])
     async def command_actuators(self, commands:list[ActuatorCommand]):
-        k = 1 if commands[0]['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-        ids = [i['actuator_id'] for i in commands]
-        states = await self.actuator.get_actuators_state(ids)
+        # k = 1 if commands[0]['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
+        # ids = [i['actuator_id'] for i in commands]
+        # states = await self.actuator.get_actuators_state(ids)
         cmds = []
-        for state in states.states:
-            k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-            now_pos = transform_position(state.position-self.source_positions[state.actuator_id])*k
-            command = commands[ids.index(state.actuator_id)]
-            # direction = 1 if command['position'] > now_pos else -1
-            direction = 1
+        # for state in states.states:
+        #     k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
+        #     now_pos = transform_position(state.position-self.source_positions[state.actuator_id])*k
+        #     command = commands[ids.index(state.actuator_id)]
+        #     # direction = 1 if command['position'] > now_pos else -1
+        #     pos = command['position']*k
+        #     direction = 1
+        #     cmds.append({
+        #         'actuator_id': state.actuator_id,
+        #         'position': transform_position( + self.source_positions[command['actuator_id']]),
+        #         'velocity': command.get('velocity', CONFIG['actuator_speed']) * k * direction,
+        #         'torque': command.get('torque', CONFIG['actuator_torque'])
+        #     })
+        for c in commands:
+            k = 1 if c['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
+            pos = c['position'] * k
+            pos = max(ACTUATOR_POSITION_RANGE[c['actuator_id']][0], min(ACTUATOR_POSITION_RANGE[c['actuator_id']][1], pos))
             cmds.append({
-                'actuator_id': state.actuator_id,
-                'position': transform_position(command['position']*k + self.source_positions[command['actuator_id']]),
-                'velocity': command.get('velocity', CONFIG['actuator_speed']) * k * direction,
-                'torque': command.get('torque', CONFIG['actuator_torque'])
+                'actuator_id': c['actuator_id'],
+                'position': transform_position(pos + self.source_positions[c['actuator_id']]),
+                'velocity': c.get('velocity', CONFIG['actuator_speed']),
+                'torque': c.get('torque', CONFIG['actuator_torque'])
             })
         return await self.actuator.command_actuators(cmds)
     async def get_actuators_state(self, actuator_ids:list[int]):

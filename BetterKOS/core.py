@@ -12,6 +12,7 @@ import math
 from typing import TypedDict
 import time
 import asyncio
+from utils import *
 
 
 ACTUATOR_MAPPING = {
@@ -67,8 +68,12 @@ MODEL_MAP = (
             )
 CONFIG = {
     'actuator_speed': 50,
-    'actuator_torque': 0.1
+    'actuator_torque': 0.1,
+    'lin_vel_y_range': [-0.6, -0.6],
+    'lin_vel_x_range': [-0.01, 0.01],
+    'ang_vel_range': [-0.01, 0.01]
 }
+
 
 def transform_position(position:float)->float:
     position = position % 360
@@ -96,7 +101,7 @@ class BetterKOS(KOS):
     last_time_second = -1
     phase: float = 0         # 步调相位/2pi
     walk_speed: float = 1/0.4    # 步态速度 1.0=2pi/s
-    move_commands = np.array([0.1, 0.0, 0.0], dtype=np.float32)  # 移动控制[x, y, z]
+    move_commands = np.array([0.0, 0.0, 0.0], dtype=np.float32)  # 移动控制[x, y, z]
     session: ort.InferenceSession
     frame:int=0 # 当前帧
     def __init__(self, *args, **kwargs):
@@ -207,6 +212,10 @@ class BetterKOS(KOS):
         # 帧更新
         # 调整步态
         current_time_second = time.time()
+        # 判断是否在move command范围内
+        assert is_in_range(self.move_commands[0], CONFIG['lin_vel_x_range']), f'x移动命令不在范围{CONFIG['lin_vel_x_range']}内'
+        assert is_in_range(self.move_commands[1], CONFIG['lin_vel_y_range']), f'y移动命令不在范围{CONFIG['lin_vel_y_range']}内'
+        assert is_in_range(self.move_commands[2], CONFIG['ang_vel_range']), f'ang移动命令不在范围{CONFIG['ang_vel_range']}内'
         if self.last_time_second > 0:
             dt = current_time_second - self.last_time_second
             self.phase += self.walk_speed * dt

@@ -219,10 +219,10 @@ class BetterKOS(KOS):
         # imu_advanced_data = await self.imu.get_imu_advanced_values()
         imu_euler_angles = await self.get_euler_angles()
         imu_data = await self.get_imu_values()
-        # base_ang_vel = [imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi, imu_data.gyro_z/180*math.pi]
-        # base_euler = [imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi, imu_euler_angles.yaw/180*math.pi]
-        base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]
-        base_euler = [-imu_euler_angles.yaw/180*math.pi, -imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi]
+        base_ang_vel = [imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi, imu_data.gyro_z/180*math.pi]
+        base_euler = [imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi, imu_euler_angles.yaw/180*math.pi]
+        # base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]
+        # base_euler = [-imu_euler_angles.yaw/180*math.pi, -imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi]
         # 获取关节位置和速度
         states = await self.get_actuators_state([
             ACTUATOR_MAPPING['right_hip_pitch'],
@@ -316,7 +316,8 @@ def onnx_inference(session:ort.InferenceSession, phase:float, commands:np.ndarra
             10  RESERVED
             11  RESERVED
     '''
-    obs = np.zeros(45).astype(np.float32)
+    # obs = np.zeros(45).astype(np.float32)
+    obs = np.zeros(41).astype(np.float32)
     obs[0] = math.sin(2*math.pi*phase)     # 步态周期的正弦值
     obs[1] = math.cos(2*math.pi*phase)     # 步态周期的余弦值
     obs[2] = commands[0] * obs_scales["lin_vel"]  # X方向线速度命令

@@ -210,8 +210,8 @@ class BetterKOS(KOS):
         if self.last_time_second > 0:
             dt = current_time_second - self.last_time_second
             self.phase += self.walk_speed * dt
-            if self.phase > 2*math.pi:
-                self.phase -= 2*math.pi
+            if self.phase > 1:
+                self.phase -= 1
         self.last_time_second = current_time_second
         # 获取传感器数据
         # imu_euler_angles = await self.imu.get_euler_angles()

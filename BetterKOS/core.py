@@ -253,7 +253,6 @@ class BetterKOS(KOS):
         }, dof_pos, dof_vel, self.last_actions, base_ang_vel, base_euler, np.zeros(10))
         for i in range(len(next_actions)):
             next_actions[i] = transform_position2(next_actions[i])
-        # 叠加增量
         self.last_actions = next_actions
         # 移动电机
         await self.command_actuators([{

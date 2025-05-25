@@ -233,18 +233,7 @@ class BetterKOS(KOS):
         # base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]
         # base_euler = [-imu_euler_angles.yaw/180*math.pi, -imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi]
         # 获取关节位置和速度
-        states = await self.get_actuators_state([
-            ACTUATOR_MAPPING['right_hip_pitch'],
-            ACTUATOR_MAPPING['left_hip_pitch'],
-            ACTUATOR_MAPPING['right_hip_yaw'],
-            ACTUATOR_MAPPING['left_hip_yaw'],
-            ACTUATOR_MAPPING['right_hip_roll'],
-            ACTUATOR_MAPPING['left_hip_roll'],
-            ACTUATOR_MAPPING['right_knee_pitch'],
-            ACTUATOR_MAPPING['left_knee_pitch'],
-            ACTUATOR_MAPPING['right_ankle_pitch'],
-            ACTUATOR_MAPPING['left_ankle_pitch']
-        ])
+        states = await self.get_actuators_state(MODEL_MAP)
         dof_pos = np.zeros(10)
         dof_vel = np.zeros(10)
         # for state in states.states:
@@ -269,7 +258,7 @@ class BetterKOS(KOS):
         # 移动电机
         await self.command_actuators([{
             'actuator_id': MODEL_MAP[i],
-            'position': (dof_pos[i] + next_actions[i])*180/math.pi,
+            'position': min(max(next_actions[i], -18), 18)*0.25*180/math.pi,
             'velocity': CONFIG['actuator_speed']
         # } for i in range(10) if MODEL_MAP[i] in (33, 43)])
         } for i in range(10)])

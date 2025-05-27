@@ -170,9 +170,6 @@ class BetterKOS(KOS):
         return raw
     async def get_imu_values(self):
         raw = await self.imu.get_imu_values()
-        # raw.gyro_x = transform_position(raw.gyro_x - self.source_imu_values.gyro_x)
-        # raw.gyro_y = transform_position(raw.gyro_y - self.source_imu_values.gyro_y)
-        # raw.gyro_z = transform_position(raw.gyro_z - self.source_imu_values.gyro_z)
         return raw
     async def __aenter__(self):
         await super().__aenter__()
@@ -206,23 +203,14 @@ class BetterKOS(KOS):
                 self.phase -= 1
         self.last_time_second = current_time_second
         # 获取传感器数据
-        # imu_euler_angles = await self.imu.get_euler_angles()
-        # imu_data = await self.imu.get_imu_values()
-        # imu_advanced_data = await self.imu.get_imu_advanced_values()
         imu_euler_angles = await self.get_euler_angles()
         imu_data = await self.get_imu_values()
         base_ang_vel = [imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi, imu_data.gyro_z/180*math.pi]
         base_euler = [imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi, imu_euler_angles.yaw/180*math.pi]
-        # base_ang_vel = [-imu_data.gyro_z/180*math.pi, -imu_data.gyro_x/180*math.pi, imu_data.gyro_y/180*math.pi]
-        # base_euler = [-imu_euler_angles.yaw/180*math.pi, -imu_euler_angles.roll/180*math.pi, imu_euler_angles.pitch/180*math.pi]
         # 获取关节位置和速度
         states = await self.get_actuators_state(MODEL_MAP)
         dof_pos = np.zeros(10)
         dof_vel = np.zeros(10)
-        # for state in states.states:
-        #     k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-        #     dof_pos[MODEL_MAP.index(state.actuator_id)] = k*transform_position(state.position - self.source_positions[state.actuator_id])/180*math.pi
-        #     dof_vel[MODEL_MAP.index(state.actuator_id)] = k*state.velocity/180*math.pi
         for state in states.states:
             dof_pos[MODEL_MAP.index(state.actuator_id)] = state.position/180*math.pi
             dof_vel[MODEL_MAP.index(state.actuator_id)] = state.velocity/180*math.pi
@@ -242,7 +230,6 @@ class BetterKOS(KOS):
             'actuator_id': MODEL_MAP[i],
             'position': min(max(next_actions[i], -18), 18)*0.25*180/math.pi,
             'velocity': CONFIG['actuator_speed']
-        # } for i in range(10) if MODEL_MAP[i] in (33, 43)])
         } for i in range(10)])
     
     async def loop(self, delta_time:float=0.02):

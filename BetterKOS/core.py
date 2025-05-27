@@ -177,7 +177,7 @@ class BetterKOS(KOS):
         return self
     
     async def load_session(self, session_path:str):
-        self.session = ort.InferenceSession(session_path)
+        self.session = ort.InferenceSession(session_path, providers=['CUDAExecutionProvider', 'CoreMLExecutionProvider', 'ROCMExecutionProvider', 'MIGraphXExecutionProvider', 'CPUExecutionProvider'])
         print('ONNX模型加载成功')
     
     async def update(self):

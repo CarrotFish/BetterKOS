@@ -240,7 +240,9 @@ class BetterKOS(KOS):
             await self._update()
             await self.update_after()
             self.frame += 1
-            await asyncio.sleep(max(0, delta_time - (time.time()-st)))
+            slt = max(0, delta_time - (time.time()-st))
+            print(f'Delta Time: {slt}')
+            await asyncio.sleep(slt)
     
 
 
@@ -332,8 +334,8 @@ def onnx_inference(session:ort.InferenceSession, phase:float, commands:np.ndarra
     obs[39] = base_euler[1] * obs_scales["quat"]  # Pitch角（俯仰）
     obs[40] = base_euler[2] * obs_scales["quat"]  # Yaw角（偏航）
     # Reserved for future use(4)
-    print('[Inference Input]', obs)
+    # print('[Inference Input]', obs)
     # 执行推理
     results = session.run(None, {'obs': [obs]})[0][0]
-    print('[Inference Output]', results)
+    # print('[Inference Output]', results)
     return results

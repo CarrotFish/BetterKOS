@@ -9,7 +9,10 @@ async def main(App: Type[BetterKOS]):
         config = json.load(f)
     async with App(config['robot_ip'], config['robot_port']) as kos:
         try:
+            # 加载模型
             await kos.load_session(config['model_file'])
+            # 加载机器人配置文件
+            await kos.load_urdf('robot_fixed.urdf')
             input('回车以初始化imu')
             await kos.init_imu()
             input('回车以开始循环')

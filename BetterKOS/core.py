@@ -13,8 +13,16 @@ from typing import TypedDict
 import time
 import asyncio
 from utils import *
+import xml.etree.ElementTree as ET
 
 
+CONFIG = {
+    'actuator_speed': 10,
+    'actuator_torque': 0.1,
+    'lin_vel_y_range': [-0.6, -0.6],
+    'lin_vel_x_range': [-0.01, 0.01],
+    'ang_vel_range': [-0.01, 0.01]
+}
 ACTUATOR_MAPPING = {
     "left_shoulder_yaw": 11,
     "left_shoulder_pitch": 12,
@@ -54,6 +62,24 @@ ACTUATOR_POSITION_RANGE = {
     44: [-90, 10],
     45: [-90, 90]
 }
+ACTUATOR_VELOCITY = {
+    11: CONFIG['actuator_speed'],
+    12: CONFIG['actuator_speed'],
+    13: CONFIG['actuator_speed'],
+    21: CONFIG['actuator_speed'],
+    22: CONFIG['actuator_speed'],
+    23: CONFIG['actuator_speed'],
+    31: CONFIG['actuator_speed'],
+    32: CONFIG['actuator_speed'],
+    33: CONFIG['actuator_speed'],
+    34: CONFIG['actuator_speed'],
+    35: CONFIG['actuator_speed'],
+    41: CONFIG['actuator_speed'],
+    42: CONFIG['actuator_speed'],
+    43: CONFIG['actuator_speed'],
+    44: CONFIG['actuator_speed'],
+    45: CONFIG['actuator_speed']
+}
 MODEL_MAP = (
                 ACTUATOR_MAPPING['right_hip_pitch'],
                 ACTUATOR_MAPPING['left_hip_pitch'],
@@ -66,13 +92,6 @@ MODEL_MAP = (
                 ACTUATOR_MAPPING['right_ankle_pitch'],
                 ACTUATOR_MAPPING['left_ankle_pitch']
             )
-CONFIG = {
-    'actuator_speed': 10,
-    'actuator_torque': 0.1,
-    'lin_vel_y_range': [-0.6, -0.6],
-    'lin_vel_x_range': [-0.01, 0.01],
-    'ang_vel_range': [-0.01, 0.01]
-}
 
 
 def transform_position(position:float)->float:
@@ -150,7 +169,7 @@ class BetterKOS(KOS):
             cmds.append({
                 'actuator_id': c['actuator_id'],
                 'position': transform_position(pos + self.source_positions[c['actuator_id']]),
-                'velocity': c.get('velocity', CONFIG['actuator_speed']),
+                'velocity': c.get('velocity', ACTUATOR_VELOCITY[c['actuator_id']]),
                 'torque': c.get('torque', CONFIG['actuator_torque'])
             })
         return await self.actuator.command_actuators(cmds)
@@ -179,6 +198,25 @@ class BetterKOS(KOS):
     async def load_session(self, session_path:str):
         self.session = ort.InferenceSession(session_path, providers=['CUDAExecutionProvider', 'CoreMLExecutionProvider', 'ROCMExecutionProvider', 'MIGraphXExecutionProvider', 'CPUExecutionProvider'])
         print('ONNX模型加载成功')
+    
+    async def load_urdf(self, urdf_path:str):
+        """读取URDF文件并加载配置"""
+        tree = ET.parse(urdf_path)
+        root = tree.getroot()
+        for child in root:
+            if child.tag == 'joint':
+                name = child.attrib['name']
+                if name in ACTUATOR_MAPPING:
+                    # 设置相关数据 <limit effort="1" velocity="20" lower="-1.5707963" upper="1.5707963" />
+                    limit = child.find('limit')
+                    if limit is not None:
+                        lower = float(limit.attrib['lower'])*180/math.pi
+                        upper = float(limit.attrib['upper'])*180/math.pi
+                        velocity = float(limit.attrib['velocity'])
+                        ACTUATOR_POSITION_RANGE[ACTUATOR_MAPPING[name]] = [lower, upper]
+                        ACTUATOR_VELOCITY[ACTUATOR_MAPPING[name]] = velocity
+                        print(f'设置{name}的位置范围为{lower}~{upper}，速度为{velocity}')
+        print('URDF文件加载成功')
     
     async def update(self):
         """需要重写，在每帧的步态调整_update之前调用"""
@@ -228,8 +266,7 @@ class BetterKOS(KOS):
         # 移动电机
         await self.command_actuators([{
             'actuator_id': MODEL_MAP[i],
-            'position': min(max(next_actions[i], -18), 18)*0.25*180/math.pi,
-            'velocity': CONFIG['actuator_speed']
+            'position': min(max(next_actions[i], -18), 18)*0.25*180/math.pi
         } for i in range(10)])
     
     async def loop(self, delta_time:float=0.02):

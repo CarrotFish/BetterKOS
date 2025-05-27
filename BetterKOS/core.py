@@ -67,7 +67,7 @@ MODEL_MAP = (
                 ACTUATOR_MAPPING['left_ankle_pitch']
             )
 CONFIG = {
-    'actuator_speed': 50,
+    'actuator_speed': 10,
     'actuator_torque': 0.1,
     'lin_vel_y_range': [-0.6, -0.6],
     'lin_vel_x_range': [-0.01, 0.01],
@@ -135,7 +135,7 @@ class BetterKOS(KOS):
         # await self.imu.zero()
         self.source_imu_values = await self.imu.get_imu_values()
         self.source_imu_angles = await self.imu.get_euler_angles()
-    async def move(self, actuator_id, position, speed=10):
+    async def move(self, actuator_id, position, speed=CONFIG['actuator_speed']):
         return await self.actuator.command_actuators([{
             'actuator_id': actuator_id,
             'position': transform_position(position + self.source_positions[actuator_id]),

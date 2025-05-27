@@ -142,23 +142,7 @@ class BetterKOS(KOS):
             'velocity': speed
         }])
     async def command_actuators(self, commands:list[ActuatorCommand]):
-        # k = 1 if commands[0]['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-        # ids = [i['actuator_id'] for i in commands]
-        # states = await self.actuator.get_actuators_state(ids)
         cmds = []
-        # for state in states.states:
-        #     k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
-        #     now_pos = transform_position(state.position-self.source_positions[state.actuator_id])*k
-        #     command = commands[ids.index(state.actuator_id)]
-        #     # direction = 1 if command['position'] > now_pos else -1
-        #     pos = command['position']*k
-        #     direction = 1
-        #     cmds.append({
-        #         'actuator_id': state.actuator_id,
-        #         'position': transform_position( + self.source_positions[command['actuator_id']]),
-        #         'velocity': command.get('velocity', CONFIG['actuator_speed']) * k * direction,
-        #         'torque': command.get('torque', CONFIG['actuator_torque'])
-        #     })
         for c in commands:
             k = 1 if c['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
             pos = c['position'] * k
@@ -177,7 +161,6 @@ class BetterKOS(KOS):
             k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
             state.position = k*transform_position(state.position-self.source_positions[state.actuator_id])
             result_states.append(state)
-        # return result_states
         return raw
     async def get_euler_angles(self):
         raw = await self.imu.get_euler_angles()

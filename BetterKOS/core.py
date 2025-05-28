@@ -12,7 +12,7 @@ import math
 from typing import TypedDict
 import time
 import asyncio
-from utils import *
+from BetterKOS.utils import *
 import xml.etree.ElementTree as ET
 
 
@@ -108,12 +108,14 @@ def transform_position2(position:float)->float:
 
 class BetterKOS(KOS):
     '''
-        继承自KOS类，添加了command_actuators方法，添加了手动reset功能
-        使用时可以无需configure电机和调用init方法，直接使用async with就行
-        内置ONNX模型推理功能和姿态记忆功能
-        eg:
-        async with BetterKOS('192.168.1.100') as kos:
-            await kos.command_actuators()
+继承自KOS类，添加了command_actuators方法，添加了手动reset功能\n
+使用时可以无需configure电机和调用init方法，直接使用async with就行\n
+内置ONNX模型推理功能和姿态记忆功能\n
+eg:
+```python
+async with BetterKOS('192.168.1.100') as kos:
+    await kos.command_actuators()
+```
     '''
     source_positions = {}
     last_actions = np.zeros(10)

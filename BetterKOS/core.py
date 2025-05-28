@@ -365,13 +365,22 @@ def onnx_inference(session:ort.InferenceSession, phase:float, commands:np.ndarra
     obs[33] = actions[8]  # right_ankle_pitch 动作
     obs[34] = actions[9]  # left_ankle_pitch 动作
     # 36-38: 角速度 (3维)
-    obs[35] = base_ang_vel[0] * obs_scales["ang_vel"]  # X轴角速度
-    obs[36] = base_ang_vel[1] * obs_scales["ang_vel"]  # Y轴角速度
-    obs[37] = base_ang_vel[2] * obs_scales["ang_vel"]  # Z轴角速度
+    # obs[35] = base_ang_vel[0] * obs_scales["ang_vel"]  # X轴角速度
+    # obs[36] = base_ang_vel[1] * obs_scales["ang_vel"]  # Y轴角速度
+    # obs[37] = base_ang_vel[2] * obs_scales["ang_vel"]  # Z轴角速度
+    # 测试结果：[-Pitch, Roll, Yaw]
+    obs[35] = -base_ang_vel[0] * obs_scales["ang_vel"]
+    obs[36] = base_ang_vel[2] * obs_scales["ang_vel"]
+    obs[37] = base_ang_vel[1] * obs_scales["ang_vel"]
+    # 机器人IMU对应：[pitch(仰头), yaw(左), roll(左)]
     # 39-41: 姿态欧拉角 (3维)
-    obs[38] = base_euler[0] * obs_scales["quat"]  # Roll角（横滚）
-    obs[39] = base_euler[1] * obs_scales["quat"]  # Pitch角（俯仰）
-    obs[40] = base_euler[2] * obs_scales["quat"]  # Yaw角（偏航）
+    # obs[38] = base_euler[0] * obs_scales["quat"]  # Roll角（横滚）
+    # obs[39] = base_euler[1] * obs_scales["quat"]  # Pitch角（俯仰）
+    # obs[40] = base_euler[2] * obs_scales["quat"]  # Yaw角（偏航）
+    # 测试结果：[Pitch, Roll, -Yaw]
+    obs[38] = base_euler[1] * obs_scales["quat"]
+    obs[39] = (base_euler[0]-20) * obs_scales["quat"] # 我也不知道为什么-20，测出来差不多是这样的
+    obs[40] = -base_euler[2] * obs_scales["quat"]
     # Reserved for future use(4)
     # print('[Inference Input]', obs)
     # 执行推理

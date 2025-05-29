@@ -1,0 +1,3 @@
+pykos
+kos-sim==0.0.10
+protobuf==5.29.0

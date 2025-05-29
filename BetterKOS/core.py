@@ -212,9 +212,9 @@ async with BetterKOS('192.168.1.100') as kos:
                     # 设置相关数据 <limit effort="1" velocity="20" lower="-1.5707963" upper="1.5707963" />
                     limit = child.find('limit')
                     if limit is not None:
-                        lower = float(limit.attrib['lower'])*180/math.pi
-                        upper = float(limit.attrib['upper'])*180/math.pi
-                        velocity = float(limit.attrib['velocity'])
+                        lower = round(float(limit.attrib['lower'])*180/math.pi, 2)
+                        upper = round(float(limit.attrib['upper'])*180/math.pi, 2)
+                        velocity = round(float(limit.attrib['velocity']), 2)
                         ACTUATOR_POSITION_RANGE[ACTUATOR_MAPPING[name]] = [lower, upper]
                         ACTUATOR_VELOCITY[ACTUATOR_MAPPING[name]] = velocity
                         print(f'设置{name}的位置范围为{lower}~{upper}，速度为{velocity}')

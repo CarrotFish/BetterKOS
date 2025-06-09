@@ -163,6 +163,7 @@ async with BetterKOS('192.168.1.100') as kos:
             'velocity': speed
         }])
     async def command_actuators(self, commands:list[ActuatorCommand]):
+        st = time.time()
         cmds = []
         for c in commands:
             k = 1 if c['actuator_id'] not in ACTUATOR_WITH_WRONG_DIRECTION else -1
@@ -174,23 +175,31 @@ async with BetterKOS('192.168.1.100') as kos:
                 'velocity': c.get('velocity', ACTUATOR_VELOCITY[c['actuator_id']]),
                 'torque': c.get('torque', CONFIG['actuator_torque'])
             })
-        return await self.actuator.command_actuators(cmds)
+        result = await self.actuator.command_actuators(cmds)
+        print(f'Command Actuators Cost {time.time()-st}s')
+        return result
     async def get_actuators_state(self, actuator_ids:list[int]):
+        st = time.time()
         raw = await self.actuator.get_actuators_state(actuator_ids)
         result_states = []
         for state in raw.states:
             k = 1 if state.actuator_id not in ACTUATOR_WITH_WRONG_DIRECTION else -1
             state.position = k*transform_position(state.position-self.source_positions[state.actuator_id])
             result_states.append(state)
+        print(f'Get Actuators States Cost {time.time()-st}s')
         return raw
     async def get_euler_angles(self):
+        st = time.time()
         raw = await self.imu.get_euler_angles()
         raw.roll = transform_position(raw.roll - self.source_imu_angles.roll)
         raw.pitch = transform_position(raw.pitch - self.source_imu_angles.pitch)
         raw.yaw = transform_position(raw.yaw - self.source_imu_angles.yaw)
+        print(f'Get Imu Euler Angles Cost {time.time()-st}s')
         return raw
     async def get_imu_values(self):
+        st = time.time()
         raw = await self.imu.get_imu_values()
+        print(f'Get IMU Values Cost {time.time()-st}s')
         return raw
     async def __aenter__(self):
         await super().__aenter__()
@@ -324,6 +333,7 @@ def onnx_inference(session:ort.InferenceSession, phase:float, commands:np.ndarra
             10  RESERVED
             11  RESERVED
     '''
+    st = time.time()
     # obs = np.zeros(45).astype(np.float32)
     obs = np.zeros(41).astype(np.float32)
     obs[0] = math.sin(2*math.pi*phase)     # 步态周期的正弦值
@@ -386,4 +396,5 @@ def onnx_inference(session:ort.InferenceSession, phase:float, commands:np.ndarra
     # 执行推理
     results = session.run(None, {'obs': [obs]})[0][0]
     # print('[Inference Output]', results)
+    print(f'Inference Time Cost {time.time()-st}s')
     return results
